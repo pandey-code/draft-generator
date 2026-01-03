@@ -1,47 +1,34 @@
 from flask import Flask, render_template, request
+import openai
+import os
 
 app = Flask(__name__)
 
-def generate_draft(issue, draft_type):
-    issue = issue.strip()
+# 🔐 SET YOUR API KEY HERE
+openai.api_key = "PASTE_YOUR_API_KEY_HERE"
 
-    if draft_type == "email":
-        return f"""Subject: Clarification required regarding the matter
+def ai_generate_draft(issue, draft_type):
+    prompt = f"""
+You are a professional chartered accountant and business consultant.
 
-Dear Sir/Madam,
+Convert the following issue into a well-written {draft_type}:
 
-This is with reference to the following matter:
-
-"{issue}"
-
-Based on our review, the same requires clarification and confirmation from your end. Kindly provide the necessary explanation along with supporting details, if any.
-
-Please feel free to reach out in case of any questions.
-
-Regards,
-"""
-    elif draft_type == "audit":
-        return f"""Audit Note:
-
-Issue Identified:
+Issue:
 {issue}
 
-Observation:
-During the course of audit, the above matter was noted and requires management clarification.
-
-Action Required:
-Management to review the matter and provide reconciliation / justification along with supporting documents.
+Make it clear, professional, and concise.
 """
-    else:  # WhatsApp
-        return f"""Hello,
 
-Regarding the following issue:
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You write professional business drafts."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.4
+    )
 
-{issue}
-
-Kindly review and confirm at the earliest. Please share clarification and supporting details.
-
-Thanks."""
+    return response.choices[0].message.content.strip()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -49,7 +36,15 @@ def index():
     if request.method == "POST":
         issue = request.form["user_text"]
         draft_type = request.form["draft_type"]
-        draft = generate_draft(issue, draft_type)
+
+        if draft_type == "email":
+            label = "professional email"
+        elif draft_type == "audit":
+            label = "audit note"
+        else:
+            label = "WhatsApp message"
+
+        draft = ai_generate_draft(issue, label)
 
     return render_template("index.html", draft=draft)
 
