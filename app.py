@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 # 🔐 SET YOUR API KEY HERE
-openai.api_key = "PASTE_YOUR_API_KEY_HERE"
+openai.api_key = "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"
 
 def ai_generate_draft(issue, draft_type):
     prompt = f"""
@@ -50,3 +50,4 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
